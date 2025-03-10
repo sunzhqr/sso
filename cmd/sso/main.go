@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/sunzhqr/sso/internal/app"
 	"github.com/sunzhqr/sso/internal/config"
 	"github.com/sunzhqr/sso/internal/lib/logger/handlers/slogpretty"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 const (
@@ -21,9 +24,20 @@ func main() {
 	logger := setupLogger(cfg.Env)
 	logger.Info("starting application", slog.Any("config", cfg))
 
+	application := app.New(logger, cfg.GRPC.Port, cfg.StoragePath, cfg.TokenTTL)
+	go application.GRPCSrv.MustRun()
+
 	// TODO: initialize app
 
 	// TODO: launch gPRC-server of the app
+
+	// Graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	signalValue := <-stop
+	logger.Info("stop application", slog.String("signal", signalValue.String()))
+	application.GRPCSrv.Stop()
+	logger.Info("application stopped")
 }
 
 func setupLogger(env string) *slog.Logger {
