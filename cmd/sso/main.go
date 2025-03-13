@@ -27,10 +27,6 @@ func main() {
 	application := app.New(logger, cfg.GRPC.Port, cfg.StoragePath, cfg.TokenTTL)
 	go application.GRPCSrv.MustRun()
 
-	// TODO: initialize app
-
-	// TODO: launch gPRC-server of the app
-
 	// Graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
